@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>KityMinder Lite - Powered By Stdio</title>
+	<title>KityManager</title>
 
 	<link href="favicon.ico" type="image/x-icon" rel="shortcut icon">
 
@@ -42,16 +42,6 @@
 			right: 0;
 		}
 	</style>
-	<script>
-		window.$ = window.jQuery = require('../bower_components/jquery/dist/jquery.js');
-
-		var electron = require('electron');
-		electron.ipcRenderer.on('load-file', function(event, data) {
-				data = JSON.parse(data);
-				console.log(data);
-				editor.minder.importJson(data);
-		});
-	</script>
 </head>
 <body ng-app="kityminderDemo" ng-controller="MainController">
 <!-- <h1 class="editor-title">KityMinder Editor - Powered By FEX</h1> -->
@@ -59,7 +49,8 @@
 </body>
 
 <!-- bower:js -->
-<script src="../bower_components/jquery/dist/jquery.js"></script>
+<!-- <script src="../bower_components/jquery/dist/jquery.js"></script> -->
+<script>window.$ = window.jQuery = require('../bower_components/jquery/dist/jquery.js');</script>
 <script src="../bower_components/bootstrap/dist/js/bootstrap.js"></script>
 <script src="../bower_components/angular/angular.js"></script>
 <script src="../bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
@@ -81,6 +72,7 @@
 <!-- endbower -->
 
 <script src="kityminder.editor.min.js"></script>
+<script src="file_operation.js"></script>
 
 
 <script>
@@ -91,6 +83,7 @@
 					window.minder = minder;
 				};
 			});
+
 </script>
 
 </html>

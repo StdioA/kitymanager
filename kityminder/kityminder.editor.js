@@ -1,9 +1,9 @@
 /*!
  * ====================================================
- * kityminder-editor - v1.0.48 - 2015-12-14
+ * kityminder-editor - v1.0.53 - 2016-05-09
  * https://github.com/fex-team/kityminder-editor
  * GitHub: https://github.com/fex-team/kityminder-editor 
- * Copyright (c) 2015 ; Licensed 
+ * Copyright (c) 2016 ; Licensed 
  * ====================================================
  */
 
@@ -427,7 +427,7 @@ _p[7] = {
 /**
  * @fileOverview
  *
- * 用于拖拽节点是屏蔽键盘事件
+ * 用于拖拽节点时屏蔽键盘事件
  *
  * @author: techird
  * @copyright: Baidu FEX, 2014
@@ -457,13 +457,86 @@ _p[8] = {
             var MOUSE_HAS_DOWN = 0;
             var MOUSE_HAS_UP = 1;
             var flag = MOUSE_HAS_UP;
+            var maxX, maxY, osx, osy;
+            var freeHorizen = false, freeVirtical = false;
+            var frame;
+            function move(direction, speed) {
+                if (!direction) {
+                    freeHorizen = freeVirtical = false;
+                    frame && kity.releaseFrame(frame);
+                    frame = null;
+                    return;
+                }
+                if (!frame) {
+                    frame = kity.requestFrame(function(direction, speed, minder) {
+                        return function(frame) {
+                            switch (direction) {
+                              case "left":
+                                minder._viewDragger.move({
+                                    x: -speed,
+                                    y: 0
+                                }, 0);
+                                break;
+
+                              case "top":
+                                minder._viewDragger.move({
+                                    x: 0,
+                                    y: -speed
+                                }, 0);
+                                break;
+
+                              case "right":
+                                minder._viewDragger.move({
+                                    x: speed,
+                                    y: 0
+                                }, 0);
+                                break;
+
+                              case "bottom":
+                                minder._viewDragger.move({
+                                    x: 0,
+                                    y: speed
+                                }, 0);
+                                break;
+
+                              default:
+                                return;
+                            }
+                            frame.next();
+                        };
+                    }(direction, speed, minder));
+                }
+            }
             minder.on("mousedown", function(e) {
                 flag = MOUSE_HAS_DOWN;
-                downX = e.clientX;
-                downY = e.clientY;
+                downX = e.originEvent.clientX;
+                downY = e.originEvent.clientY;
+                maxX = minder.getPaper().container.clientWidth;
+                maxY = minder.getPaper().container.clientHeight;
             });
             minder.on("mousemove", function(e) {
-                if (fsm.state() != "drag" && flag == MOUSE_HAS_DOWN && minder.getSelectedNode() || (Math.abs(downX - e.clientX) > 10 || Math.abs(downY - e.clientY) > 10)) {
+                if (fsm.state() === "drag" && flag == MOUSE_HAS_DOWN && minder.getSelectedNode() && (Math.abs(downX - e.originEvent.clientX) > 10 || Math.abs(downY - e.originEvent.clientY) > 10)) {
+                    osx = e.originEvent.offsetX;
+                    osy = e.originEvent.offsetY;
+                    if (osx < 10) {
+                        move("right", 10 - osx);
+                    } else if (osx > maxX - 10) {
+                        move("left", 10 + osx - maxX);
+                    } else {
+                        freeHorizen = true;
+                    }
+                    if (osy < 10) {
+                        move("bottom", osy);
+                    } else if (osy > maxY - 10) {
+                        move("top", 10 + osy - maxY);
+                    } else {
+                        freeVirtical = true;
+                    }
+                    if (freeHorizen && freeVirtical) {
+                        move(false);
+                    }
+                }
+                if (fsm.state() != "drag" && flag == MOUSE_HAS_DOWN && minder.getSelectedNode() && (Math.abs(downX - e.originEvent.clientX) > 10 || Math.abs(downY - e.originEvent.clientY) > 10)) {
                     if (fsm.state() == "hotbox") {
                         hotbox.active(Hotbox.STATE_IDLE);
                     }
@@ -473,6 +546,7 @@ _p[8] = {
             document.body.onmouseup = function(e) {
                 flag = MOUSE_HAS_UP;
                 if (fsm.state() == "drag") {
+                    move(false);
                     return fsm.jump("normal", "drag-finish");
                 }
             };
@@ -804,7 +878,7 @@ _p[12] = {
                     }
                 });
                 // lost focus to commit
-                receiver.onblur(function() {
+                receiver.onblur(function(e) {
                     if (fsm.state() == "input") {
                         fsm.jump("normal", "input-commit");
                     }
@@ -855,8 +929,11 @@ _p[12] = {
             // edit for the selected node
             function editText() {
                 var node = minder.getSelectedNode();
+                if (!node) {
+                    return;
+                }
                 var textContainer = receiverElement;
-                receiverElement.innerHTML = "";
+                receiverElement.innerText = "";
                 if (node.getData("font-weight") === "bold") {
                     var b = document.createElement("b");
                     textContainer.appendChild(b);
@@ -1022,7 +1099,7 @@ _p[12] = {
                 }
                 text = text.replace(/^\n*|\n*$/g, "");
                 text = text.replace(new RegExp("(\n|\r|\n\r)( |" + String.fromCharCode(160) + "){4}", "g"), "$1	");
-                minder.execCommand("text", text);
+                minder.getSelectedNode().setText(text);
                 if (isBold) {
                     minder.queryCommandState("bold") || minder.execCommand("bold");
                 } else {
@@ -1057,10 +1134,13 @@ _p[12] = {
                             return node;
                         }
                         importText(node, json, minder);
+                        minder.fire("contentchange");
                         minder.getRoot().renderTree();
                         minder.layout(300);
                     });
                 } catch (e) {
+                    minder.fire("contentchange");
+                    minder.getRoot().renderTree();
                     // 无法被转换成脑图节点则不处理
                     if (e.toString() !== "Error: Invalid local format") {
                         throw e;
@@ -1138,6 +1218,11 @@ _p[13] = {
             if (e.keyCode >= 65 && e.keyCode <= 90) return true;
             // 0-9 以及其上面的符号
             if (e.keyCode >= 48 && e.keyCode <= 57) return true;
+            // 小键盘区域 (除回车外)
+            if (e.keyCode != 108 && e.keyCode >= 96 && e.keyCode <= 111) return true;
+            // 小键盘区域 (除回车外)
+            // @yinheli from pull request
+            if (e.keyCode != 108 && e.keyCode >= 96 && e.keyCode <= 111) return true;
             // 输入法
             if (e.keyCode == 229 || e.keyCode === 0) return true;
             return false;
@@ -1166,7 +1251,7 @@ _p[13] = {
                     e.preventDefault();
                     // safari下Space触发hotbox,然而这时Space已在receiver上留下作案痕迹,因此抹掉
                     if (kity.Browser.safari) {
-                        eceiverElement.innerHTML = "";
+                        receiverElement.innerHTML = "";
                     }
                     return fsm.jump("hotbox", "space-trigger");
                 }
@@ -1317,6 +1402,7 @@ _p[15] = {
             var fsm = this.fsm;
             var main = hotbox.state("main");
             var buttons = [ "前移:Alt+Up:ArrangeUp", "下级:Tab|Insert:AppendChildNode", "同级:Enter:AppendSiblingNode", "后移:Alt+Down:ArrangeDown", "删除:Delete|Backspace:RemoveNode", "上级:Shift+Tab|Shift+Insert:AppendParentNode" ];
+            var AppendLock = 0;
             buttons.forEach(function(button) {
                 var parts = button.split(":");
                 var label = parts.shift();
@@ -1328,7 +1414,16 @@ _p[15] = {
                     key: key,
                     action: function() {
                         if (command.indexOf("Append") === 0) {
+                            AppendLock++;
                             minder.execCommand(command, "分支主题");
+                            // provide in input runtime
+                            function afterAppend() {
+                                if (!--AppendLock) {
+                                    runtime.editText();
+                                }
+                                minder.off("layoutallfinish", afterAppend);
+                            }
+                            minder.on("layoutallfinish", afterAppend);
                         } else {
                             minder.execCommand(command);
                             fsm.jump("normal", "command-executed");
@@ -2012,9 +2107,12 @@ angular.module('kityminderEditor').run(['$templateCache', function($templateCach
 
 
   $templateCache.put('ui/directive/navigator/navigator.html',
-    "<div class=\"nav-bar\"><div class=\"nav-btn zoom-in\" ng-click=\"minder.execCommand('zoomIn')\" title=\"{{ 'zoom-in' | lang : 'ui' }}\" ng-class=\"{ 'active' : getZoomRadio(zoom) == 0 }\"><div class=\"icon\"></div></div><div class=\"zoom-pan\"><div class=\"origin\" ng-style=\"{'transform': 'translate(0, ' + getHeight(100) + 'px)'}\" ng-click=\"minder.execCommand('zoom', 100);\"></div><div class=\"indicator\" ng-style=\"{\n" +
-    "             'transform': 'translate(0, ' + getHeight(zoom) + 'px)',\n" +
-    "             'transition': 'transform 200ms'\n" +
+    "<div class=\"nav-bar\"><div class=\"nav-btn zoom-in\" ng-click=\"minder.execCommand('zoomIn')\" title=\"{{ 'zoom-in' | lang : 'ui' }}\" ng-class=\"{ 'active' : getZoomRadio(zoom) == 0 }\"><div class=\"icon\"></div></div><div class=\"zoom-pan\"><div class=\"origin\" ng-style=\"{'transform': 'translate(0, ' + getHeight(100) + 'px)'}\" ng-click=\"minder.execCommand('zoom', 100);\"></div><div class=\"indicator\" ng-style=\"{\r" +
+    "\n" +
+    "             'transform': 'translate(0, ' + getHeight(zoom) + 'px)',\r" +
+    "\n" +
+    "             'transition': 'transform 200ms'\r" +
+    "\n" +
     "             }\"></div></div><div class=\"nav-btn zoom-out\" ng-click=\"minder.execCommand('zoomOut')\" title=\"{{ 'zoom-out' | lang : 'ui' }}\" ng-class=\"{ 'active' : getZoomRadio(zoom) == 1 }\"><div class=\"icon\"></div></div><div class=\"nav-btn hand\" ng-click=\"minder.execCommand('hand')\" title=\"{{ 'hand' | lang : 'ui' }}\" ng-class=\"{ 'active' : minder.queryCommandState('hand') == 1 }\"><div class=\"icon\"></div></div><div class=\"nav-btn camera\" ng-click=\"minder.execCommand('camera', minder.getRoot(), 600);\" title=\"{{ 'camera' | lang : 'ui' }}\"><div class=\"icon\"></div></div><div class=\"nav-btn nav-trigger\" ng-class=\"{'active' : isNavOpen}\" ng-click=\"toggleNavOpen()\" title=\"{{ 'navigator' | lang : 'ui' }}\"><div class=\"icon\"></div></div></div><div class=\"nav-previewer\" ng-show=\"isNavOpen\"></div>"
   );
 
@@ -2025,13 +2123,20 @@ angular.module('kityminderEditor').run(['$templateCache', function($templateCach
 
 
   $templateCache.put('ui/directive/noteEditor/noteEditor.html',
-    "<div class=\"panel panel-default\" ng-init=\"noteEditorOpen = false\" ng-show=\"noteEditorOpen\"><div class=\"panel-heading\"><h3 class=\"panel-title\">备注</h3><span>（<a class=\"help\" href=\"https://www.zybuluo.com/techird/note/46064\" target=\"_blank\">支持 GFM 语法书写</a>）</span> <i class=\"close-note-editor glyphicon glyphicon-remove\" ng-click=\"closeNoteEditor()\"></i></div><div class=\"panel-body\"><div ng-show=\"noteEnabled\" ui-codemirror=\"{ onLoad: codemirrorLoaded }\" ng-model=\"noteContent\" ui-codemirror-opts=\"{\n" +
-    "                gfm: true,\n" +
-    "                breaks: true,\n" +
-    "                lineWrapping : true,\n" +
-    "                mode: 'gfm',\n" +
-    "                dragDrop: false,\n" +
-    "                lineNumbers:true\n" +
+    "<div class=\"panel panel-default\" ng-init=\"noteEditorOpen = false\" ng-show=\"noteEditorOpen\"><div class=\"panel-heading\"><h3 class=\"panel-title\">备注</h3><span>（<a class=\"help\" href=\"https://www.zybuluo.com/techird/note/46064\" target=\"_blank\">支持 GFM 语法书写</a>）</span> <i class=\"close-note-editor glyphicon glyphicon-remove\" ng-click=\"closeNoteEditor()\"></i></div><div class=\"panel-body\"><div ng-show=\"noteEnabled\" ui-codemirror=\"{ onLoad: codemirrorLoaded }\" ng-model=\"noteContent\" ui-codemirror-opts=\"{\r" +
+    "\n" +
+    "                gfm: true,\r" +
+    "\n" +
+    "                breaks: true,\r" +
+    "\n" +
+    "                lineWrapping : true,\r" +
+    "\n" +
+    "                mode: 'gfm',\r" +
+    "\n" +
+    "                dragDrop: false,\r" +
+    "\n" +
+    "                lineNumbers:true\r" +
+    "\n" +
     "             }\"></div><p ng-show=\"!noteEnabled\" class=\"km-note-tips\">请选择节点编辑备注</p></div></div>"
   );
 
@@ -2107,7 +2212,8 @@ angular.module('kityminderEditor').run(['$templateCache', function($templateCach
 
 
   $templateCache.put('ui/dialog/imExportNode/imExportNode.tpl.html',
-    "<div class=\"modal-header\"><h3 class=\"modal-title\">{{ title }}</h3></div><div class=\"modal-body\"><textarea type=\"text\" class=\"form-control single-input\" rows=\"8\" ng-keydown=\"shortCut($event);\" ng-model=\"value\" ng-readonly=\"type === 'export'\">\n" +
+    "<div class=\"modal-header\"><h3 class=\"modal-title\">{{ title }}</h3></div><div class=\"modal-body\"><textarea type=\"text\" class=\"form-control single-input\" rows=\"8\" ng-keydown=\"shortCut($event);\" ng-model=\"value\" ng-readonly=\"type === 'export'\">\r" +
+    "\n" +
     "    </textarea></div><div class=\"modal-footer\"><button class=\"btn btn-primary\" ng-click=\"ok()\" ng-disabled=\"type === 'import' && value == ''\">OK</button> <button class=\"btn btn-warning\" ng-click=\"cancel()\">Cancel</button></div>"
   );
 

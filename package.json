@@ -1,5 +1,5 @@
 {
-  "name": "electron-quick-start",
+  "name": "KityManager",
   "version": "1.0.0",
   "description": "A minimal Electron application",
   "main": "main.js",
@@ -11,13 +11,9 @@
     "url": "git+https://github.com/atom/electron-quick-start.git"
   },
   "keywords": [
-    "Electron",
-    "quick",
-    "start",
-    "tutorial"
   ],
-  "author": "GitHub",
-  "license": "CC0-1.0",
+  "author": "StdioA",
+  "license": "ISC",
   "bugs": {
     "url": "https://github.com/atom/electron-quick-start/issues"
   },

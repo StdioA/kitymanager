@@ -1,4 +1,4 @@
 # KityManager
 
-kityminder-editor的electron封装。
+kityminder-editor 的 electron 封装。
 
