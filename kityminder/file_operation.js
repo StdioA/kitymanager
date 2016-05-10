@@ -1,6 +1,7 @@
+var fname_wather = require('./filename_watcher');
 // 文件拖拽
 var holder = document.getElementsByTagName('body')[0];
-var filename = undefined;
+var filename = new fname_wather();
 
 holder.ondragover = function () {
   return false;
@@ -12,7 +13,8 @@ holder.ondrop = function (e) {
   e.preventDefault();
   var file = e.dataTransfer.files[0];
 
-  filename = file.path;
+  // filename = file.path;
+  filename.setFilename(file.path);
   
   var reader = new FileReader();
   reader.onload = (function (file) {
@@ -28,7 +30,7 @@ holder.ondrop = function (e) {
 // 打开文件
 var ipc = require("electron").ipcRenderer;
 ipc.on('load-file', function (event, data, fname) {
-  filename = fname;
+  filename.setFilename(fname);
   editor.minder.importJson(data);
 });
 
@@ -41,18 +43,20 @@ ipc.on('console', function (event, data) {
   }
 });
 
-// 用于保存/另存为
+// 保存/另存为
 ipc.on('save-file', function (event, fname) {
   if (!Object.is(fname, undefined)) {
-    filename = fname;
+    filename.setFilename(fname);
   }
-  ipc.send('file-content', editor.minder.exportJson(), filename);
+  ipc.send('file-content', editor.minder.exportJson(), filename.getFilename());
 });
 
+// 另存为后设置文件名
 ipc.on('set-filename', function (event, fname) {
-  filename = fname;
+  filename.setFilename(fname);
 });
 
+// 按格式导出文件
 ipc.on('export-file', function (event, format) {
   editor.minder.exportData(format).then(function (data) {
     ipc.send('file-content', data);
