@@ -7,9 +7,12 @@ const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 const Menu = electron.Menu
 
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
+
+var export_file = require('./file_operation').export_file;
 
 
 // 初始化菜单
@@ -30,6 +33,7 @@ var template = [
         click: function (item, focusedWindow) {
           // 打开文件
           const dialog = require('electron').dialog;
+
           dialog.showOpenDialog (focusedWindow, { 
                           title: "Open Mindmap",
                           properties: [ 'openFile' ],
@@ -52,15 +56,33 @@ var template = [
         label: 'Save',
         accelerator: "CommandOrControl+S",
         click: function (item, focusedWindow) {
-          focusedWindow.webContents.executeJavaScript("editor.minder.exportJson()", true, function (data) {
-            // focusedWindow.webContents.send('console', data);
-            focusedWindow.webContents.executeJavaScript("filename", true, function (fname) {
-              var fs = require('fs');
-              fs.writeFile(fname, JSON.stringify(data), 'utf8', function (err) {
-                if (err) throw err;
-                focusedWindow.webContents.send('console', 'saved!');
-              });
+          var ipc = focusedWindow.webContents;
+          const dialog = require('electron').dialog;
+          const ipcMain = require('electron').ipcMain;
 
+          ipc.send('save-file');
+          ipcMain.once('file-content', function (event, content, fname) {
+            if (Object.is(fname, null)) {
+              fname = dialog.showSaveDialog (focusedWindow, { 
+                          title: "Save Mindmap",
+                          properties: [ 'openFile' ],
+                          filters: [
+                            { name: 'KityMinder File', extensions: ['km'] },
+                            { name: 'All Files', extensions: ['*'] }
+                          ]
+                        });
+              if (!fname) {
+                return;
+              }
+              else {
+                ipc.send('set-filename', fname);
+              }
+            }
+
+            var fs = require('fs');
+            fs.writeFile(fname, JSON.stringify(content), 'utf8', function (err) {
+              if (err) throw err;
+              event.sender.send('console', 'saved, '+fname);
             });
           });
         }
@@ -69,8 +91,11 @@ var template = [
         label: 'Save As',
         accelerator: "CommandOrControl+Shift+S",
         click: function (item, focusedWindow) {
+          const ipcMain = require('electron').ipcMain;
           const dialog = require('electron').dialog;
-          dialog.showSaveDialog (focusedWindow, { 
+          var ipc = focusedWindow.webContents;
+
+          dialog.showSaveDialog (focusedWindow, {
                           title: "Save As",
                           dafaultPath: "",
                           filters: [
@@ -78,30 +103,53 @@ var template = [
                             { name: 'All Files', extensions: ['*'] }
                           ]
                         }, function (filename) {
-                          var fs = require('fs');
+                            ipc.send('save-file', filename);
+                            ipcMain.once('file-content', function (event, content, fname) {
+                              event.sender.send('console', fname, content);
 
-                          if (!Object.is(filename, undefined)) {
-                            focusedWindow.webContents.executeJavaScript("editor.minder.exportJson()", true, function (data) {
                               var fs = require('fs');
-
-                              focusedWindow.webContents.send('console', filename);
-
-                              fs.writeFile(filename, JSON.stringify(data), 'utf8', function (err) {
+                              fs.writeFile(fname, JSON.stringify(content), 'utf8', function (err) {
                                 if (err) throw err;
-                                focusedWindow.webContents.send('console', filename+'saved!');
+                                event.sender.send('console', 'saved!');
                               });
-
                             });
-                          }
-                        });
+                          });
         }
       },
       {
         type: 'separator'
       },
       {
+        label: 'Export',
+        submenu: [
+          {
+            label: 'JSON',
+            click: export_file
+          },
+          {
+            label: 'Plain Text',
+            click: export_file
+          },
+          {
+            label: 'Markdown',
+            click: export_file
+          },
+          {
+            label: 'SVG',
+            click: export_file
+          },
+          {
+            label: 'PNG',
+            click: export_file
+          }
+        ]
+      },
+      {
+        type: 'separator'
+      },
+      {
         label: 'Exit',
-        accelerator: 'Command+Q',
+        accelerator: 'CommandOrControl+W',
         click: function() { app.quit(); }
       },
     ]
@@ -151,6 +199,19 @@ var template = [
         label: 'Reload',
         accelerator: 'CommandOrControl+R',
         click: function() { BrowserWindow.getFocusedWindow().reloadIgnoringCache(); }
+      },
+      {
+        label: 'Toggle Full Screen',
+        accelerator: (function() {
+          if (process.platform == 'darwin')
+            return 'Ctrl+Command+F';
+          else
+            return 'F11';
+        })(),
+        click: function(item, focusedWindow) {
+          if (focusedWindow)
+            focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
+        }
       },
       {
         label: 'Toggle DevTools',
