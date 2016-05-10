@@ -1,23 +1,23 @@
 {
   "name": "KityManager",
-  "version": "1.0.0",
-  "description": "A minimal Electron application",
+  "version": "0.1.0",
+  "description": "Using KityMinder offline with Electron",
   "main": "main.js",
   "scripts": {
     "start": "electron main.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/atom/electron-quick-start.git"
+    "url": "git+https://github.com/StdioA/kitymanager.git"
   },
   "keywords": [
   ],
-  "author": "StdioA",
+  "author": "David Dai",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/atom/electron-quick-start/issues"
+    "url": "https://github.com/StdioA/kitymanager/issues"
   },
-  "homepage": "https://github.com/atom/electron-quick-start#readme",
+  "homepage": "https://github.com/StdioA/kitymanager#readme",
   "devDependencies": {
     "electron-prebuilt": "^0.36.0"
   }
