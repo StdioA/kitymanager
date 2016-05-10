@@ -12,7 +12,11 @@ const Menu = electron.Menu
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
-var export_file = require('./file_operation').export_file;
+var fop = require('./file_operation')
+var export_file = fop.export_file;
+var open_file = fop.open_file;
+var save_as = fop.save_as;
+var save_file = fop.save_file;
 
 
 // 初始化菜单
@@ -30,91 +34,17 @@ var template = [
       {
         label: 'Open file',
         accelerator: 'CommandOrControl+O',
-        click: function (item, focusedWindow) {
-          // 打开文件
-          const dialog = require('electron').dialog;
-
-          dialog.showOpenDialog (focusedWindow, { 
-                          title: "Open Mindmap",
-                          properties: [ 'openFile' ],
-                          filters: [
-                            { name: 'KityMinder File', extensions: ['km'] },
-                            { name: 'All Files', extensions: ['*'] }
-                          ]
-                        }, function (filenames) {
-                          var fs = require('fs');
-                          if (!Object.is(filenames, undefined)) {
-                            var filename = filenames[0];
-                            fs.readFile(filename, 'utf8', function (err, data) {
-                              focusedWindow.webContents.send('load-file', JSON.parse(data), filename);
-                            });
-                          }
-                        });
-        }
+        click: open_file
       },
       {
         label: 'Save',
         accelerator: "CommandOrControl+S",
-        click: function (item, focusedWindow) {
-          var ipc = focusedWindow.webContents;
-          const dialog = require('electron').dialog;
-          const ipcMain = require('electron').ipcMain;
-
-          ipc.send('save-file');
-          ipcMain.once('file-content', function (event, content, fname) {
-            if (Object.is(fname, null)) {
-              fname = dialog.showSaveDialog (focusedWindow, { 
-                          title: "Save Mindmap",
-                          properties: [ 'openFile' ],
-                          filters: [
-                            { name: 'KityMinder File', extensions: ['km'] },
-                            { name: 'All Files', extensions: ['*'] }
-                          ]
-                        });
-              if (!fname) {
-                return;
-              }
-              else {
-                ipc.send('set-filename', fname);
-              }
-            }
-
-            var fs = require('fs');
-            fs.writeFile(fname, JSON.stringify(content), 'utf8', function (err) {
-              if (err) throw err;
-              event.sender.send('console', 'saved, '+fname);
-            });
-          });
-        }
+        click: save_file
       },
       {
         label: 'Save As',
         accelerator: "CommandOrControl+Shift+S",
-        click: function (item, focusedWindow) {
-          const ipcMain = require('electron').ipcMain;
-          const dialog = require('electron').dialog;
-          var ipc = focusedWindow.webContents;
-
-          dialog.showSaveDialog (focusedWindow, {
-                          title: "Save As",
-                          dafaultPath: "",
-                          filters: [
-                            { name: 'KityMinder File', extensions: ['km'] },
-                            { name: 'All Files', extensions: ['*'] }
-                          ]
-                        }, function (filename) {
-                            ipc.send('save-file', filename);
-                            ipcMain.once('file-content', function (event, content, fname) {
-                              event.sender.send('console', fname, content);
-
-                              var fs = require('fs');
-                              fs.writeFile(fname, JSON.stringify(content), 'utf8', function (err) {
-                                if (err) throw err;
-                                event.sender.send('console', 'saved!');
-                              });
-                            });
-                          });
-        }
+        click: save_as
       },
       {
         type: 'separator'
