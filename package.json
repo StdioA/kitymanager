@@ -4,7 +4,7 @@
   "description": "Using KityMinder offline with Electron",
   "main": "main.js",
   "scripts": {
-    "start": "electron main.js"
+    "start": "electron ."
   },
   "repository": {
     "type": "git",
@@ -19,6 +19,6 @@
   },
   "homepage": "https://github.com/StdioA/kitymanager#readme",
   "devDependencies": {
-    "electron-prebuilt": "^0.36.0"
+     "electron": "^1.4.1"
   }
 }
