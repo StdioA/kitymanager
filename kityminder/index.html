@@ -74,9 +74,11 @@
 <script src="kityminder.editor.min.js"></script>
 <script src="file_operation.js"></script>
 
-
 <script>
 	angular.module('kityminderDemo', ['kityminderEditor'])
+			.config(function (configProvider) {
+				configProvider.set('imageUpload', '../server/imageUpload.php');
+			})
 			.controller('MainController', function($scope) {
 				$scope.initEditor = function(editor, minder) {
 					window.editor = editor;
