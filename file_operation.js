@@ -1,8 +1,7 @@
-const dialog = require('electron').dialog;
-const ipcMain = require('electron').ipcMain;
+const {dialog, ipcMain} = require('electron');
 const fs = require('fs');
 
-var open_file = function (item, focusedWindow) {
+const open_file = (item, focusedWindow) => {
   // 打开文件
   dialog.showOpenDialog (focusedWindow, { 
                   title: "Open Mindmap",
@@ -21,7 +20,7 @@ var open_file = function (item, focusedWindow) {
                 });
 }
 
-var save_as = function (item, focusedWindow) {
+const save_as = (item, focusedWindow) => {
   var ipc = focusedWindow.webContents;
 
   dialog.showSaveDialog (focusedWindow, {
@@ -44,7 +43,7 @@ var save_as = function (item, focusedWindow) {
                   });
 }
 
-var save_file = function (item, focusedWindow) {
+const save_file = (item, focusedWindow, callback) => {
   var ipc = focusedWindow.webContents;
 
   ipc.send('save-file');
@@ -65,11 +64,14 @@ var save_file = function (item, focusedWindow) {
     fs.writeFile(fname, JSON.stringify(content), 'utf8', function (err) {
       if (err) throw err;
       event.sender.send('console', 'saved, '+fname);
+      if (Object.prototype.toString.call(callback)=== '[object Function]') {
+        callback();
+      }
     });
   });
 }
 
-var export_file = function (menuItem, focusedWindow) {
+const export_file = (menuItem, focusedWindow) => {
   var ipc = focusedWindow.webContents;
 
   var formats = {
@@ -113,8 +115,8 @@ var export_file = function (menuItem, focusedWindow) {
 }
 
 module.exports = {
-  open_file: open_file,
-  save_file: save_file,
-  save_as: save_as,
-	export_file: export_file,
+  open_file,
+  save_file,
+  save_as,
+  export_file,
 }

@@ -1,23 +1,15 @@
 'use strict';
 
 const electron = require('electron');
+const {dialog, Menu, BrowserWindow,ipcMain} = require('electron');
+const {export_file, open_file, save_as, save_file} = require('./file_operation');
 // Module to control application life.
 const app = electron.app;
-// Module to create native browser window.
-const BrowserWindow = electron.BrowserWindow;
-const Menu = electron.Menu
-
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
-
-var fop = require('./file_operation')
-var export_file = fop.export_file;
-var open_file = fop.open_file;
-var save_as = fop.save_as;
-var save_file = fop.save_file;
-
+let activateWindows = [mainWindow];
 
 // 初始化菜单
 var template = [
@@ -28,7 +20,7 @@ var template = [
         label: 'New File',
         accelerator: 'CommandOrControl+N',
         click: function (){
-          var newWindow = createNewWindow();
+          var newWindow = createWindow();
         }
       },
       {
@@ -176,17 +168,33 @@ var template = [
 
 var menu = Menu.buildFromTemplate(template);
 
-function createNewWindow () {
-  Menu.setApplicationMenu(menu); // Must be called within app.on('ready', function(){ ... });
+function createWindow () {
+  Menu.setApplicationMenu(menu);
 
-  // Create the browser window.
   var newWindow = new BrowserWindow({width: 800, height: 600});
+  activateWindows.push(newWindow);
 
-  // and load the index.html of the app.
   newWindow.loadURL('file://' + __dirname + '/kityminder/index.html');
 
-  // Open the DevTools.
-  // newWindow.webContents.openDevTools();
+  // popUp the message box when closed
+  newWindow.on('close', function (e) {
+    let response = dialog.showMessageBox({
+      type: 'question',
+      title: '关闭窗口',
+      message: '将修改保存到文件？',
+      buttons: ['是', '否', '取消'],
+      cancelId: 2
+    });
+
+    if (response == 0) {
+      e.preventDefault();
+      save_file(null, newWindow, () => {
+        newWindow.destroy();
+      });
+    } else if (response == 2) {
+      e.preventDefault();
+    }
+  });
 
   // Emitted when the window is closed.
   newWindow.on('closed', function() {
@@ -194,29 +202,12 @@ function createNewWindow () {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     newWindow = null;
+    var index = activateWindows.indexOf(newWindow);
+    if (index > -1) {
+      activateWindows.splice(index, 1);
+    }
   });
   return newWindow;
-}
-
-function createWindow () {
-  Menu.setApplicationMenu(menu); // Must be called within app.on('ready', function(){ ... });
-
-  // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600});
-
-  // and load the index.html of the app.
-  mainWindow.loadURL('file://' + __dirname + '/kityminder/index.html');
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
-
-  // Emitted when the window is closed.
-  mainWindow.on('closed', function() {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    mainWindow = null;
-  });
 }
 
 // This method will be called when Electron has finished
