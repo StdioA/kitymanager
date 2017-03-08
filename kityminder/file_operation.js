@@ -60,3 +60,18 @@ ipcRenderer.on('export-file', function (event, format) {
     ipcRenderer.send('file-content', data);
   })
 });
+
+
+const keyListener = () => {
+  setTimeout(() => {
+    if (editor.history.hasUndo()) {
+      console.log('File Changed!');
+      ipcRenderer.send('file-changed', true);
+      removeEventListener('keydown', keyListener);
+    }
+  }, 100);
+}
+
+$(document).ready(() => {
+  addEventListener('keydown', keyListener);
+});

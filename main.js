@@ -1,7 +1,7 @@
 'use strict';
 
 const electron = require('electron');
-const {dialog, Menu, BrowserWindow,ipcMain} = require('electron');
+const {dialog, Menu, BrowserWindow, ipcMain} = require('electron');
 const {export_file, open_file, save_as, save_file} = require('./file_operation');
 // Module to control application life.
 const app = electron.app;
@@ -176,8 +176,19 @@ function createWindow () {
 
   newWindow.loadURL('file://' + __dirname + '/kityminder/index.html');
 
+  newWindow.statusStore = {
+    fileChanged: false
+  };
+
+  ipcMain.once('file-changed', () => {
+    newWindow.statusStore.fileChanged = true;
+  });
+
   // popUp the message box when closed
   newWindow.on('close', function (e) {
+    const ipc = newWindow.webContents;
+    if (!newWindow.statusStore.fileChanged) return;
+
     let response = dialog.showMessageBox({
       type: 'question',
       title: '关闭窗口',
