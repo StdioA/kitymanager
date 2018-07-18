@@ -67,6 +67,7 @@ const save_file = (item, focusedWindow, callback) => {
       if (Object.prototype.toString.call(callback)=== '[object Function]') {
         callback();
       }
+      focusedWindow.statusStore.fileChanged = true;
     });
   });
 }

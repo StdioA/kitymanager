@@ -44,7 +44,15 @@
 	</style>
 </head>
 <body ng-app="kityminderDemo" ng-controller="MainController">
-<!-- <h1 class="editor-title">KityMinder Editor - Powered By FEX</h1> -->
+
+<div class="modal bs-example-modal-sm" id="loadModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      释放以载入文件
+    </div>
+  </div>
+</div>
+
 <kityminder-editor on-init="initEditor(editor, minder)"></kityminder-editor>
 </body>
 
