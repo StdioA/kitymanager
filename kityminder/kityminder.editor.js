@@ -1,9 +1,9 @@
 /*!
  * ====================================================
- * kityminder-editor - v1.0.58 - 2017-02-03
+ * kityminder-editor - v1.0.63 - 2018-03-27
  * https://github.com/fex-team/kityminder-editor
  * GitHub: https://github.com/fex-team/kityminder-editor 
- * Copyright (c) 2017 ; Licensed 
+ * Copyright (c) 2018 ; Licensed 
  * ====================================================
  */
 
@@ -990,7 +990,7 @@ _p[12] = {
          */
             function commitInputText(textNodes) {
                 var text = "";
-                var TAB_CHAR = "	", ENTER_CHAR = "\n", STR_CHECK = /\S/, SPACE_CHAR = " ", // 针对FF,SG,BD,LB,IE等浏览器下SPACE的charCode存在为32和160的情况做处理
+                var TAB_CHAR = "\t", ENTER_CHAR = "\n", STR_CHECK = /\S/, SPACE_CHAR = " ", // 针对FF,SG,BD,LB,IE等浏览器下SPACE的charCode存在为32和160的情况做处理
                 SPACE_CHAR_REGEXP = new RegExp("( |" + String.fromCharCode(160) + ")"), BR = document.createElement("br");
                 var isBold = false, isItalic = false;
                 for (var str, _divChildNodes, space_l, space_num, tab_num, i = 0, l = textNodes.length; i < l; i++) {
@@ -1110,7 +1110,7 @@ _p[12] = {
                     }
                 }
                 text = text.replace(/^\n*|\n*$/g, "");
-                text = text.replace(new RegExp("(\n|\r|\n\r)( |" + String.fromCharCode(160) + "){4}", "g"), "$1	");
+                text = text.replace(new RegExp("(\n|\r|\n\r)( |" + String.fromCharCode(160) + "){4}", "g"), "$1\t");
                 minder.getSelectedNode().setText(text);
                 if (isBold) {
                     minder.queryCommandState("bold") || minder.execCommand("bold");
@@ -2639,7 +2639,7 @@ angular.module('kityminderEditor')
                     'insertlink': '插入链接',
                     'insertimage': '插入图片',
                     'insertnote': '插入备注',
-					'removelink': '移除已有连接',
+					'removelink': '移除已有链接',
 					'removeimage': '移除已有图片',
 					'removenote': '移除已有备注',
 					'resetlayout': '整理',

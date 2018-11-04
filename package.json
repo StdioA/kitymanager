@@ -1,6 +1,6 @@
 {
   "name": "KityManager",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Using KityMinder offline with Electron",
   "main": "main.js",
   "scripts": {
@@ -10,8 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/StdioA/kitymanager.git"
   },
-  "keywords": [
-  ],
+  "keywords": [],
   "author": "David Dai",
   "license": "ISC",
   "bugs": {
@@ -19,6 +18,9 @@
   },
   "homepage": "https://github.com/StdioA/kitymanager#readme",
   "devDependencies": {
-     "electron": "^1.4.1"
+    "electron": "^3.0.7"
+  },
+  "dependencies": {
+    "kityminder-core": "^1.4.50"
   }
 }
