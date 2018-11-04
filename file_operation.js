@@ -31,6 +31,9 @@ const save_as = (item, focusedWindow) => {
                     { name: 'All Files', extensions: ['*'] }
                   ]
                 }, function (filename) {
+                    if (Object.is(filename, undefined)) {
+                      return;
+                    }
                     ipc.send('save-file', filename);
                     ipcMain.once('file-content', function (event, content, fname) {
                       event.sender.send('console', fname, content);

@@ -11,6 +11,7 @@ class filename_watcher {
   }
 
   setFilename (fname) {
+    if (Object.is(fname, null)) return;
     if (this.filename != fname) {
       this.filename = fname;
       let fname_l = this.filename.split(/[\\/]/);
