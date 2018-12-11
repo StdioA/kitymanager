@@ -7,5 +7,6 @@
 
 # 运行方法
 
-1. 安装依赖：`npm install && bower install`
-2. 运行：`npm start`
+1. 安装全局依赖：`yarn global add bower`
+2. 安装依赖：`yarn install`
+3. 运行：`yarn start`
