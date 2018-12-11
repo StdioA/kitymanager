@@ -4,7 +4,11 @@
   "description": "Using KityMinder offline with Electron",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "postinstall": "bower install",
+    "pack:win": "electron-packager . --platform=win32 --arch=all --icon=icons/icon.ico --out=dist/ --overwrite --ignore=\"(.git|.vscode)\"",
+    "pack:linux": "electron-packager . --platform=linux --arch=all --icon=icons/icon.ico --out=dist/ --overwrite --ignore=\"(.git|.vscode)\"",
+    "pack:macos": "electron-packager . --platform=darwin --arch=all --icon=icons/icon.icns --out=dist/ --overwrite --ignore=\"(.git|.vscode)\""
   },
   "repository": {
     "type": "git",
@@ -18,7 +22,8 @@
   },
   "homepage": "https://github.com/StdioA/kitymanager#readme",
   "devDependencies": {
-    "electron": "^3.0.7"
+    "electron": "^3.0.7",
+    "electron-packager": "^13.0.0"
   },
   "dependencies": {
     "kityminder-core": "^1.4.50"
